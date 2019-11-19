@@ -69,6 +69,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -266,7 +267,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         break;
       case "LOAD_CACHE_ELSE_NETWORK":
         cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK;
-        break;  
+        break;
       case "LOAD_NO_CACHE":
         cacheMode = WebSettings.LOAD_NO_CACHE;
         break;
@@ -390,7 +391,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   public void setMessagingEnabled(WebView view, boolean enabled) {
     ((RNCWebView) view).setMessagingEnabled(enabled);
   }
-   
+
   @ReactProp(name = "incognito")
   public void setIncognito(WebView view, boolean enabled) {
     // Remove all previous cookies
@@ -697,6 +698,23 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         reactWebView.callInjectedJavaScript();
 
         emitFinishEvent(webView, url);
+      }
+    }
+
+    @Override
+    public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+      try {
+        HttpURLConnection urlCon = (HttpURLConnection) (new URL(url)).openConnection();
+        urlCon.connect();
+
+        return new WebResourceResponse(
+          "text/html",
+          urlCon.getContentEncoding(),
+          urlCon.getInputStream()
+        );
+
+      } catch (Exception e) {
+        return super.shouldInterceptRequest(view, url);
       }
     }
 
